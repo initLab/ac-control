@@ -3,7 +3,8 @@
 const fs = require('fs');
 
 const http = require('http');
-const dispatcher = require('httpdispatcher');
+const HttpDispatcher = require('httpdispatcher');
+const dispatcher = new HttpDispatcher;
 const URL = require('url');
 const QS = require('querystring');
 
