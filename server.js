@@ -22,8 +22,9 @@ function leadingZero(num) {
 }
 
 function logger(line) {
-	let dt = new Date;
-	let args = [line];
+	const dt = new Date;
+	const args = [line];
+	
 	args.unshift(
 		'[' +
 		leadingZero(dt.getDate()) + '.' +
@@ -34,6 +35,7 @@ function logger(line) {
 		leadingZero(dt.getSeconds()) +
 		']'
 	);
+	
 	console.log.apply(console, args);
 }
 
@@ -83,8 +85,8 @@ dispatcher.onGet('/status', function(req, res) {
 });
 
 dispatcher.onGet('/config', function(req, res) {
-	let url = URL.parse(req.url);
-	let query = QS.parse(url.query);
+	const url = URL.parse(req.url);
+	const query = QS.parse(url.query);
 	
 	if (!parseArgs(query)) {
 		res.writeHead(400, {
@@ -99,14 +101,14 @@ dispatcher.onGet('/config', function(req, res) {
 		return;
 	}
 	
-	let ssh = new SSH(config.ssh.connection);
+	const ssh = new SSH(config.ssh.connection);
 
 	ssh.exec(config.ssh.command, {
 		args: buildArgs(),
 		exit: function(code, stdout, stderr) {
 			let resCode = 200;
 			
-			let response = {
+			const response = {
 				code: code,
 				stdout: stdout,
 				stderr: stderr,
@@ -128,7 +130,7 @@ dispatcher.onGet('/config', function(req, res) {
 });
 
 http.createServer(function(req, res) {
-	let conn = req.connection;
+	const conn = req.connection;
 	
 	logger('HTTP client connected: ' + conn.remoteAddress + ':' + conn.remotePort);
 	logger(req.method + ' ' + req.url);
