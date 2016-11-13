@@ -4,8 +4,20 @@
 		"password": "example"
 	},
 	"ssh": {
-		"host": "192.168.0.12",
-		"user": "john",
-		"pass": "secret123"
+		"connection": {
+			"host": "192.168.0.12",
+			"user": "john",
+			"pass": "secret123"
+		},
+		"command": "/home/john/ir_tx/ir_tx"
+	},
+	"ac": {
+		"model": 1,
+		"defaultStatus": {
+			"on": false,
+			"mode": 0,
+			"temp": 24,
+			"fan": 0
+		}
 	}
 }

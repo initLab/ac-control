@@ -11,14 +11,7 @@ const SSH = require('simple-ssh');
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
-let status;
-
-status = {
-	on: false,
-	mode: 0,
-	temp: 0,
-	fan: 0
-};
+let status = config.ac.defaultStatus;
 
 function leadingZero(num) {
 	if (num > 9) {
@@ -35,7 +28,7 @@ function logger(line) {
 		'[' +
 		leadingZero(dt.getDate()) + '.' +
 		leadingZero(dt.getMonth()) + '.' +
-		(1900 + dt.getYear()) + ' ' +
+		(dt.getFullYear()) + ' ' +
 		leadingZero(dt.getHours()) + ':' +
 		leadingZero(dt.getMinutes()) + ':' +
 		leadingZero(dt.getSeconds()) +
@@ -45,11 +38,7 @@ function logger(line) {
 }
 
 function parseArgs(query) {
-	if (!('password' in query)) {
-		return false;
-	}
-	
-	if (query.password !== config.listen.password) {
+	if (!('password' in query && query.password === config.listen.password)) {
 		return false;
 	}
 	
@@ -57,73 +46,32 @@ function parseArgs(query) {
 		return false;
 	}
 		
-	let args = [
-		'2',  // model = midea
-		'1',  // on/off = on
-		'2',  // mode = auto
-		'24', // temp
-		'11'  // fan = auto
-	];
-	
-	if (!query.on) {
-		args[1] = '0';
-		return args;
+	if (parseInt(query.on) === 0) {
+		status.on = false;
+		return true;
 	}
+	
+	status.on = true;
 	
 	if (!('mode' in query && 'temp' in query && 'fan' in query)) {
 		return false;
 	}
 	
-	let mode;
+	status.mode = parseInt(query.mode);
+	status.temp = parseInt(query.temp);
+	status.fan = parseInt(query.fan);
 	
-	switch (query.mode) {
-		case 'cool':
-			mode = 0;
-			break;
-		case 'dry':
-			mode = 1;
-			break;
-		case 'auto':
-			mode = 2;
-			break;
-		case 'heat':
-			mode = 3;
-			break;
-		default:
-			return false;
-	}
-	
-	let temp = parseInt(query.temp);
-	
-	if (temp < 17 || temp > 30) {
-		return false;
-	}
-	
-	if (mode === 1) {
-		temp = 28;
-	}
-	
-	let fan;
-	
-	switch (query.fan) {
-		case 'high':
-			fan = 3;
-			break;
-		case 'low':
-			fan = 9;
-			break;
-		case 'auto':
-			fan = 11;
-			break;
-		default:
-			return false;
-	}
-	
-	args[2] = mode;
-	args[3] = temp;
-	args[4] = fan;
-	
-	return args;
+	return true;
+}
+
+function buildArgs() {
+	return [
+		String(config.ac.model),
+		String(status.on ? 1 : 0),
+		String(status.mode),
+		String(status.temp),
+		String(status.fan)
+	];
 }
 
 dispatcher.onGet('/status', function(req, res) {
@@ -138,31 +86,31 @@ dispatcher.onGet('/config', function(req, res) {
 	let url = URL.parse(req.url);
 	let query = QS.parse(url.query);
 	
-	let args = parseArgs(query);
-	
-	if (args === false) {
+	if (!parseArgs(query)) {
 		res.writeHead(400, {
 			'Content-Type': 'application/json'
 		});
 		
 		res.end(JSON.stringify({
-			'error': 'Invalid parameters'
+			error: 'Invalid parameters',
+			status: status
 		}));
 		
 		return;
 	}
 	
-	let ssh = new SSH(config.ssh);
-	
-	ssh.exec('/home/pi/ir_tx/ir_tx', {
-		args: args,
+	let ssh = new SSH(config.ssh.connection);
+
+	ssh.exec(config.ssh.command, {
+		args: buildArgs(),
 		exit: function(code, stdout, stderr) {
 			let resCode = 200;
 			
 			let response = {
-				'code': code,
-				'stdout': stdout,
-				'stderr': stderr
+				code: code,
+				stdout: stdout,
+				stderr: stderr,
+				status: status
 			};
 			
 			if (code !== 0) {
