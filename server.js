@@ -12,7 +12,9 @@ const SSH = require('simple-ssh');
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
-let status = config.ac.defaultStatus;
+let status = fs.existsSync(config.statusFile) ?
+	JSON.parse(fs.readFileSync(config.statusFile)) :
+	config.ac.defaultStatus;
 
 function leadingZero(num) {
 	if (num > 9) {
@@ -45,24 +47,23 @@ function parseArgs(query) {
 		return false;
 	}
 	
-	if (!('on' in query)) {
-		return false;
-	}
-		
-	if (parseInt(query.on) === 0) {
-		status.on = false;
-		return true;
+	if ('on' in query) {
+		status.on = (parseInt(query.on) === 1);
 	}
 	
-	status.on = true;
-	
-	if (!('mode' in query && 'temp' in query && 'fan' in query)) {
-		return false;
+	if ('mode' in query) {
+		status.mode = parseInt(query.mode);
 	}
 	
-	status.mode = parseInt(query.mode);
-	status.temp = parseInt(query.temp);
-	status.fan = parseInt(query.fan);
+	if ('temp' in query) {
+		status.temp = parseInt(query.temp);
+	}
+	
+	if ('fan' in query) {
+		status.fan = parseInt(query.fan);
+	}
+	
+	fs.writeFileSync(config.statusFile, JSON.stringify(status));
 	
 	return true;
 }
@@ -76,6 +77,9 @@ function buildArgs() {
 		String(status.fan)
 	];
 }
+
+dispatcher.setStatic('/ui/');
+dispatcher.setStaticDirname('static');
 
 dispatcher.onGet('/status', function(req, res) {
 	res.writeHead(200, {

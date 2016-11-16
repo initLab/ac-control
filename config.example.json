@@ -19,5 +19,6 @@
 			"temp": 24,
 			"fan": 0
 		}
-	}
+	},
+	"statusFile": "status.json"
 }
