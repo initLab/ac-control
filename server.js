@@ -147,5 +147,5 @@ http.createServer(function(req, res) {
 		logger(err);
 	}
 }).listen(config.listen.port, config.listen.hostname, function() {
-	logger('Server listening on: http://0.0.0.0:' + config.listen.port);
+	logger('Server listening on: http://' + config.listen.hostname + ':' + config.listen.port);
 });
