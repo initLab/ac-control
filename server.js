@@ -89,11 +89,8 @@ dispatcher.onGet('/status', function(req, res) {
 	res.end(JSON.stringify(status));
 });
 
-dispatcher.onGet('/config', function(req, res) {
-	const url = URL.parse(req.url);
-	const query = QS.parse(url.query);
-	
-	if (!parseArgs(query)) {
+dispatcher.onPost('/config', function(req, res) {
+	if (!parseArgs(req.params)) {
 		res.writeHead(400, {
 			'Content-Type': 'application/json'
 		});
