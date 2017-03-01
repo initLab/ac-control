@@ -90,6 +90,8 @@ dispatcher.onGet('/status', function(req, res) {
 });
 
 dispatcher.onPost('/config', function(req, res) {
+	logger(req.params);
+	
 	if (!parseArgs(req.params)) {
 		res.writeHead(400, {
 			'Content-Type': 'application/json'
@@ -104,9 +106,12 @@ dispatcher.onPost('/config', function(req, res) {
 	}
 	
 	const ssh = new SSH(config.ssh.connection);
+	const args = buildArgs();
+	
+	logger(args);
 
 	ssh.exec(config.ssh.command, {
-		args: buildArgs(),
+		args: args,
 		exit: function(code, stdout, stderr) {
 			let resCode = 200;
 			
