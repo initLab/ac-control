@@ -24,9 +24,9 @@ function leadingZero(num) {
 	return '0' + num;
 }
 
-function logger(line) {
+function logger() {
 	const dt = new Date;
-	const args = [line];
+	const args = Array.prototype.slice.apply(arguments);
 	
 	args.unshift(
 		'[' +
@@ -90,7 +90,7 @@ dispatcher.onGet('/status', function(req, res) {
 });
 
 dispatcher.onPost('/config', function(req, res) {
-	logger(req.params);
+	logger('Request:', req.params);
 	
 	if (!parseArgs(req.params)) {
 		res.writeHead(400, {
@@ -108,7 +108,7 @@ dispatcher.onPost('/config', function(req, res) {
 	const ssh = new SSH(config.ssh.connection);
 	const args = buildArgs();
 	
-	logger(args);
+	logger('Command:', config.ssh.command, args);
 
 	ssh.exec(config.ssh.command, {
 		args: args,
@@ -127,11 +127,16 @@ dispatcher.onPost('/config', function(req, res) {
 				response.error = 'Server error';
 			}
 			
+			logger('Response:', response);
+			
 			res.writeHead(resCode, {
 				'Content-Type': 'application/json'
 			});
 			
 			res.end(JSON.stringify(response));
+		},
+		err: function(stderr) {
+			logger('Error:', stderr);
 		}
 	}).start();
 });
